@@ -1,5 +1,11 @@
+import React, { useEffect } from 'react';
 import { ScrollView } from 'react-native';
-import React from 'react';
+
+import {
+  getTopRatedMovies,
+  getPopularMovies,
+  getTrendingWeekMovies,
+} from '@services/tmdb';
 
 import {
   Container,
@@ -18,6 +24,27 @@ type Props = {
 
 const MovieDetail = ({ route }: Props) => {
   const { streaming } = route.params;
+
+  useEffect(() => {
+    const getMovies = async () => {
+      let page = 1;
+      const movies = [];
+      while (page <= 20) {
+        const topRatedMovies = await getTopRatedMovies(page);
+        const popularMovies = await getPopularMovies(page);
+        const trendingWeekMovies = await getTrendingWeekMovies(page);
+        movies.push(...topRatedMovies, ...popularMovies, ...trendingWeekMovies);
+        page++;
+      }
+      const uniqueMovies = [
+        ...new Map(movies.map((item) => [item.id, item])).values(),
+      ];
+
+      console.log(uniqueMovies);
+    };
+    getMovies();
+  }, []);
+
   return (
     <ScrollView>
       <Container>

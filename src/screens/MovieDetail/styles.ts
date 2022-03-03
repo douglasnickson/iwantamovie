@@ -10,7 +10,6 @@ export const Container = styled.View`
 export const MovieImage = styled.Image`
   width: 200px;
   height: 250px;
-  border: 1px solid #169ddb;
   margin: 16px auto;
 `;
 
