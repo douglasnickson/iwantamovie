@@ -1,72 +1,133 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 
 import {
-  getTopRatedMovies,
-  getPopularMovies,
-  getTrendingWeekMovies,
-} from '@services/tmdb';
-
-import {
   Container,
+  TextBold,
   MovieImage,
   MovieDescription,
   MovieTitle,
+  MovieReleaseDate,
+  MovieOriginalTitle,
+  MovieStreamingContainer,
   MovieStreaming,
+  MovieCastContainer,
+  MoviePersonContainer,
   MovieCast,
+  MovieCastName,
+  MovieCastCharacter,
   MovieGenres,
   MovieRating,
 } from './styles';
+
+import { IMovie } from 'src/model/IMovie';
+import { IMovieProvider } from 'src/model/IMovieProvider';
+import { IGenre } from 'src/model/IGenre';
+import { ICast } from 'src/model/ICast';
+
+import { getGenres, getCast } from '@services/tmdb';
+
+import imageNotFound from '@assets/not-found.png';
 
 type Props = {
   route: any;
 };
 
+type IMovieWithProvider = {
+  movie: IMovie;
+  movieProvider: IMovieProvider[];
+};
+
 const MovieDetail = ({ route }: Props) => {
-  const { streaming } = route.params;
+  const { movie, movieProvider }: IMovieWithProvider = route.params;
+  const [genres, setGenres] = useState<IGenre[]>([]);
+  const [cast, setCast] = useState<ICast[]>([]);
 
   useEffect(() => {
-    const getMovies = async () => {
-      let page = 1;
-      const movies = [];
-      while (page <= 20) {
-        const topRatedMovies = await getTopRatedMovies(page);
-        const popularMovies = await getPopularMovies(page);
-        const trendingWeekMovies = await getTrendingWeekMovies(page);
-        movies.push(...topRatedMovies, ...popularMovies, ...trendingWeekMovies);
-        page++;
-      }
-      const uniqueMovies = [
-        ...new Map(movies.map((item) => [item.id, item])).values(),
-      ];
-
-      console.log(uniqueMovies);
+    const handleGenres = async () => {
+      const genresFound = await getGenres();
+      const genresFiltered = genresFound.filter((genre) =>
+        movie.genre_ids.includes(genre.id)
+      );
+      setGenres(genresFiltered);
     };
-    getMovies();
-  }, []);
+
+    const handleCast = async () => {
+      const castFound = await getCast(movie.id);
+      setCast(castFound);
+    };
+
+    handleGenres();
+    handleCast();
+  }, [movie]);
 
   return (
     <ScrollView>
       <Container>
         <MovieImage
           source={{
-            uri: 'https://static.displate.com/857x1200/displate/2018-01-22/237b645626f368ac5dd2a4b94f1e812e_4365260d579bf564fa7eca9507b0c5e4.jpg',
+            uri: `https://image.tmdb.org/t/p/w300${movie.poster_path}`,
           }}
         />
-        <MovieTitle>{streaming}</MovieTitle>
-        <MovieGenres>Gênero: Comédia, Ação, Aventura</MovieGenres>
-        <MovieDescription>
-          The Madrigals are an extraordinary family who live hidden in the
-          mountains of Colombia in a charmed place called the Encanto. The magic
-          of the Encanto has blessed every child in the family with a unique
-          gift -- every child except Mirabel. However, she soon may be the
-          Madrigals last hope
-        </MovieDescription>
-        <MovieCast>
-          Elenco: Douglas Nickson, Elen Vitória, João da Silva, Maria Amanda
-        </MovieCast>
-        <MovieRating>IMDB: 4.5/5</MovieRating>
-        <MovieStreaming />
+        <MovieTitle>{movie.title}</MovieTitle>
+        <MovieOriginalTitle>
+          <TextBold>Título Original: </TextBold>
+          {movie.original_title}
+        </MovieOriginalTitle>
+        <MovieReleaseDate>
+          <TextBold>Lançamento: </TextBold>
+          {movie.release_date}
+        </MovieReleaseDate>
+        <MovieGenres>
+          <TextBold>Gênero: </TextBold>
+          {genres &&
+            genres.map((genre, index) => (
+              <MovieGenres key={genre.id}>
+                {(index ? ', ' : '') + genre.name}
+              </MovieGenres>
+            ))}
+        </MovieGenres>
+        <MovieDescription>{movie.overview}</MovieDescription>
+        <MovieCastContainer>
+          <ScrollView horizontal={true}>
+            {cast &&
+              cast.map((castMember) => (
+                <>
+                  <MoviePersonContainer>
+                    {castMember.profile_path ? (
+                      <MovieCast
+                        key={castMember.id}
+                        source={{
+                          uri: `https://image.tmdb.org/t/p/w300${castMember.profile_path}`,
+                        }}
+                      />
+                    ) : (
+                      <MovieCast key={castMember.id} source={imageNotFound} />
+                    )}
+
+                    <MovieCastName>{castMember.name}</MovieCastName>
+                    <MovieCastCharacter>
+                      {castMember.character}
+                    </MovieCastCharacter>
+                  </MoviePersonContainer>
+                </>
+              ))}
+          </ScrollView>
+        </MovieCastContainer>
+        <MovieRating>{`Score: ${movie.vote_average}/10`}</MovieRating>
+        <MovieStreamingContainer>
+          {movieProvider &&
+            movieProvider.map((provider) => (
+              <>
+                <MovieStreaming
+                  key={provider.provider_id}
+                  source={{
+                    uri: `https://image.tmdb.org/t/p/w300${provider.logo_path}`,
+                  }}
+                />
+              </>
+            ))}
+        </MovieStreamingContainer>
       </Container>
     </ScrollView>
   );
