@@ -33,6 +33,10 @@ const adUnitId = __DEV__
   ? TestIds.BANNER
   : 'ca-app-pub-1209664770627704/8919504132';
 
+const adIntersticialUnitId = __DEV__
+  ? TestIds.INTERSTITIAL
+  : 'ca-app-pub-1209664770627704/3197894852';
+
 let movie: IMovie;
 let movieProvider: IMovieProvider[] = [];
 
@@ -41,7 +45,7 @@ export default function Dashboard({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
 
   const { adLoaded, adDismissed, show } = useInterstitialAd(
-    TestIds.INTERSTITIAL,
+    adIntersticialUnitId,
     {
       requestOptions: {
         requestNonPersonalizedAdsOnly: true,
@@ -101,6 +105,7 @@ export default function Dashboard({ navigation }: Props) {
       }
 
       setLoading(false);
+      setStreaming('');
 
       if (adLoaded) {
         show();
@@ -131,15 +136,17 @@ export default function Dashboard({ navigation }: Props) {
           mode="dropdown"
           onValueChange={(itemValue: any) => handleStreaming(itemValue)}>
           <ComboBox.Item label="Selecione uma opção" value="" />
-          <ComboBox.Item label="Netflix" value="Netflix" />
-          <ComboBox.Item label="Prime Vídeo" value="Amazon Prime Video" />
-          <ComboBox.Item label="Disney +" value="Disney Plus" />
-          <ComboBox.Item label="Star +" value="Star Plus" />
-          <ComboBox.Item label="Paramount +" value="Paramount Plus" />
           <ComboBox.Item label="Apple Tv" value="Apple TV Plus" />
-          <ComboBox.Item label="HBO Max" value="HBO Max" />
-          <ComboBox.Item label="Telecine Play" value="Telecine Play" />
+          <ComboBox.Item label="Claro video" value="Claro video" />
+          <ComboBox.Item label="Disney +" value="Disney Plus" />
           <ComboBox.Item label="Globo Play" value="Globo Play" />
+          <ComboBox.Item label="HBO Max" value="HBO Max" />
+          <ComboBox.Item label="Netflix" value="Netflix" />
+          <ComboBox.Item label="Oi Play" value="Oi Play" />
+          <ComboBox.Item label="Prime Vídeo" value="Amazon Prime Video" />
+          <ComboBox.Item label="Paramount +" value="Paramount Plus" />
+          <ComboBox.Item label="Star +" value="Star Plus" />
+          <ComboBox.Item label="Telecine Play" value="Telecine Play" />
         </ComboBox>
       </ComboBoxContainer>
       <Button disabled={loading} onPress={handleMovie}>

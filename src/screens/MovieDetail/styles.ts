@@ -100,8 +100,8 @@ export const MovieStreamingContainer = styled.View`
 `;
 
 export const MovieStreaming = styled.Image`
-  width: 32px;
-  height: 32px;
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
   margin: auto 4px;
 `;

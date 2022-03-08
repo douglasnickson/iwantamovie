@@ -4,7 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 export const Container = styled.View`
   flex: 1;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-around;
   align-items: center;
 `;
 
