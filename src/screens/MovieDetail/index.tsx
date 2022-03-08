@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
+import { parse, format } from 'date-fns';
 
 import {
   Container,
@@ -76,7 +77,10 @@ const MovieDetail = ({ route }: Props) => {
         </MovieOriginalTitle>
         <MovieReleaseDate>
           <TextBold>Lançamento: </TextBold>
-          {movie.release_date}
+          {format(
+            parse(movie.release_date, 'yyyy-MM-dd', new Date()),
+            'dd/MM/yyyy'
+          )}
         </MovieReleaseDate>
         <MovieGenres>
           <TextBold>Gênero: </TextBold>
@@ -93,16 +97,15 @@ const MovieDetail = ({ route }: Props) => {
             {cast &&
               cast.map((castMember) => (
                 <>
-                  <MoviePersonContainer>
+                  <MoviePersonContainer key={castMember.id}>
                     {castMember.profile_path ? (
                       <MovieCast
-                        key={castMember.id}
                         source={{
                           uri: `https://image.tmdb.org/t/p/w300${castMember.profile_path}`,
                         }}
                       />
                     ) : (
-                      <MovieCast key={castMember.id} source={imageNotFound} />
+                      <MovieCast source={imageNotFound} />
                     )}
 
                     <MovieCastName>{castMember.name}</MovieCastName>

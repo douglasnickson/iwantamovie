@@ -1,4 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  BannerAd,
+  TestIds,
+  BannerAdSize,
+  useInterstitialAd,
+} from '@react-native-admob/admob';
 
 import { Container, Message, ComboBoxContainer, ComboBox } from './styles';
 
@@ -15,19 +21,33 @@ import {
   getMovieProvider,
 } from '@services/tmdb';
 
-import { IMovie } from 'src/model/IMovie';
 import { IMovieProvider } from 'src/model/IMovieProvider';
 import { Alert } from 'react-native';
+import { IMovie } from 'src/model/IMovie';
 
 type Props = {
   navigation: any;
 };
 
+const adUnitId = __DEV__
+  ? TestIds.BANNER
+  : 'ca-app-pub-1209664770627704/8919504132';
+
+let movie: IMovie;
+let movieProvider: IMovieProvider[] = [];
+
 export default function Dashboard({ navigation }: Props) {
   const [streaming, setStreaming] = useState('');
   const [loading, setLoading] = useState(false);
-  const [movie, setMovie] = useState<IMovie>();
-  const [movieProvider, setMovieProvider] = useState<IMovieProvider[]>([]);
+
+  const { adLoaded, adDismissed, show } = useInterstitialAd(
+    TestIds.INTERSTITIAL,
+    {
+      requestOptions: {
+        requestNonPersonalizedAdsOnly: true,
+      },
+    }
+  );
 
   const handleStreaming = (value: string) => {
     setStreaming(value);
@@ -39,48 +59,64 @@ export default function Dashboard({ navigation }: Props) {
       return;
     }
 
-    setLoading(true);
-    let page = 1;
-    const movies = [];
-    while (page <= 20) {
-      const topRatedMovies = await getTopRatedMovies(page);
-      const popularMovies = await getPopularMovies(page);
-      const trendingWeekMovies = await getTrendingWeekMovies(page);
-      movies.push(...topRatedMovies, ...popularMovies, ...trendingWeekMovies);
-      page++;
-    }
-    const uniqueMovies = [
-      ...new Map(movies.map((item) => [item.id, item])).values(),
-    ];
+    try {
+      setLoading(true);
+      let page = 1;
 
-    let count = 0;
-    while (count < uniqueMovies.length) {
-      const randomMovie = getRandomItems(uniqueMovies, 1);
-      const providersFound = await getMovieProvider(randomMovie[0].id);
-      if (providersFound.length > 0) {
-        const movieProviders = providersFound.filter(
-          (provider) => provider.provider_name === streaming
-        );
-        if (movieProviders.length > 0) {
-          setMovie(randomMovie[0]);
-          setMovieProvider(providersFound);
-          break;
-        }
-        count++;
+      const movies = [];
+      while (page <= 20) {
+        const topRatedMovies = await getTopRatedMovies(page);
+        const popularMovies = await getPopularMovies(page);
+        const trendingWeekMovies = await getTrendingWeekMovies(page);
+        movies.push(...topRatedMovies, ...popularMovies, ...trendingWeekMovies);
+        page++;
       }
-    }
+      const uniqueMovies = [
+        ...new Map(movies.map((item) => [item.id, item])).values(),
+      ];
 
-    if (!movie) {
-      Alert.alert('Ocorreu um erro', 'Nenhum filme encontrado!');
+      let count = 0;
+      while (count < uniqueMovies.length) {
+        const randomMovie = getRandomItems(uniqueMovies, 1);
+        const providersFound = await getMovieProvider(randomMovie[0].id);
+        if (providersFound.length > 0) {
+          const movieProviders = providersFound.filter(
+            (provider) => provider.provider_name === streaming
+          );
+          if (movieProviders.length > 0) {
+            console.log(randomMovie[0]);
+
+            movie = randomMovie[0];
+            movieProvider.push(...providersFound);
+            break;
+          }
+          count++;
+        }
+      }
+
+      if (!movie) {
+        Alert.alert('Ocorreu um erro', 'Nenhum filme encontrado!');
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
-      return;
-    }
 
-    setLoading(false);
-    console.log(movie);
-    console.log(movieProvider);
-    navigation.navigate('MovieDetail', { movie, movieProvider });
+      if (adLoaded) {
+        show();
+      } else {
+        navigation.navigate('MovieDetail', { movie, movieProvider });
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
+
+  useEffect(() => {
+    if (adDismissed) {
+      navigation.navigate('MovieDetail', { movie, movieProvider });
+    }
+  }, [adDismissed, navigation]);
 
   return (
     <Container>
@@ -110,6 +146,14 @@ export default function Dashboard({ navigation }: Props) {
         PESQUISAR
       </Button>
       {loading && <Loading title={'Buscando...'} />}
+      <BannerAd
+        size={BannerAdSize.BANNER}
+        unitId={adUnitId}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: true,
+        }}
+        onAdFailedToLoad={(error) => console.error(error)}
+      />
     </Container>
   );
 }

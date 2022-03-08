@@ -15,6 +15,7 @@ export const MovieImage = styled.Image`
   width: 200px;
   height: 250px;
   margin: 16px auto;
+  border-radius: 10px;
 `;
 
 export const MovieTitle = styled.Text`
